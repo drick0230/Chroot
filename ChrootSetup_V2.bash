@@ -4,7 +4,7 @@
 ###########################################################################
 # Script : ChrootSetup.ps1
 #
-# Description : CrÃ©ation d'un utilisateur avec son home en tant
+# Description : Création d'un utilisateur avec son home en tant
 #				que Chroot et installation de Bash.
 #				
 #
@@ -31,14 +31,14 @@ echo -e $username:$password | sudo chpasswd
 # Select Bash as Shell
 sudo chsh -s $shellPath $username
 
-# CrÃ©er son home
+# Créer son home
 sudo mkdir $userDir
 
-# Permission du home Ã  Root
+# Permission du home à Root
 sudo chown root:root $userDir
 sudo chmod 0755 $userDir
 
-# CrÃ©er l'arboressence linux
+# Créer l'arboressence linux
 sudo mkdir $userDir/dev
 sudo mknod -m 666 $userDir/dev/null c 1 3
 sudo mknod -m 666 $userDir/dev/tty c 5 0
@@ -48,7 +48,7 @@ sudo mknod -m 666 $userDir/dev/random c 1 8
 sudo mkdir $userDir/bin
 sudo mkdir $userDir/etc
 
-# Installer les logicielles depuis le systÃ¨me principal
+# Installer les logicielles depuis le système principal
 for installPath in "${installList[@]}";
 do
 	sudo cp -v -r --parents $installPath $userDir # Copy the binary version of Bash
@@ -57,7 +57,7 @@ do
 	for i in ${list[@]}; do sudo cp --parents "$i" "${userDir}"; done # Copy dependencies into chrood
 done
 
-# Copier depuis le systÃ¨me principal
+# Copier depuis le système principal
 for cpPath in "${cpList[@]}";do sudo cp -r --parents "$cpPath" "${userDir}"; done
 
 # Configurer SSH
@@ -69,7 +69,7 @@ echo -e '\n' | sudo tee -a /etc/ssh/sshd_config > /dev/null
 echo -e "Match User ${username}" | sudo tee -a /etc/ssh/sshd_config > /dev/null
 echo -e "\tChrootDirectory ${userDir}" | sudo tee -a /etc/ssh/sshd_config > /dev/null
 
-# Permission du home Ã  Root
+# Permission du home à Root
 sudo chown root:root $userDir
 sudo chmod 0755 $userDir
 

@@ -22,17 +22,13 @@ usermod -a -G sudo $username
 echo -e "${username}  ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/$username > /dev/null
 
 # Créer le home de l'utilisateur
-mkdir $userHome
+mkhomedir_helper $userHome
 
 # Su en root lors de la connection
-touch $userHome/.bashrc
-echo -e "sudo su" > $userHome/.bashrc
+#touch $userHome/.bashrc
+#echo -e "sudo su" >> /etc/bash.bashrc
 
 # Installer Steam
-useradd -m steam
-cd /home/steam
-apt-get -y install software-properties-common
-add-apt-repository multiverse
 dpkg --add-architecture i386
 apt -y update
 apt -y install lib32gcc1 steamcmd

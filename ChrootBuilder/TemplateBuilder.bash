@@ -13,7 +13,9 @@
 #
 ###########################################################################
 
-chrootTemplateDir=/srv/chrootTemplate
+# Constant Variables
+chrootTemplateDir="/srv/chrootTemplate"
+bashInstall=('miscInstall.bash' 'xfceInstall.bash')
 
 # Créer son chroot
 umount $chrootTemplateDir/etc/resolv.conf
@@ -33,5 +35,12 @@ mkdir $chrootTemplateDir/proc
 mount -o bind /proc $chrootTemplateDir/proc
 
 #### Installer xfce dans le chroot en root #######################
-cp xfceInstall.bash $userDir
-chroot $userDir /bin/bash xfceInstall.bash
+for path in "${bashInstall[@]}";
+do
+	cp -v $path $chrootTemplateDir
+	chroot $chrootTemplateDir /bin/bash $path
+done
+
+# Remove process management (Need to be mounted later, not copied)
+umount $chrootTemplateDir/proc
+

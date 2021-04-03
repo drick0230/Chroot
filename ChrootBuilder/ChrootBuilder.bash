@@ -20,8 +20,19 @@
 ###########################################################################
 
 # Constant Variables
-mkdir /srv/chroot/
-port=$(expr $(ls /srv/chroot/ | wc -l) + 1)
+chrootTemplateDir="/srv/chrootTemplate"
+chrootDir="/srv/chroot/"
+
+# Create the chroot directory if it didnt exist
+if [ -d $chrootDir ]
+	then
+		echo "${chrootDir} exist. [OK]"
+	else
+		echo "${chrootDir} did not exist. mkdir ${chrootDir}"
+		mkdir $chrootDir
+fi
+
+port=$(expr $(ls $chrootDir | wc -l) + 1)
 
 #### Création de l'utilisateur ####
 # Demander le nom de l'utilisateur
@@ -29,7 +40,7 @@ read -p "Nom d'utilisateur:" username
 read -s -p "Mot de passe:" password
 echo -e '\n'
 
-userDir=/srv/chroot/$username
+userDir=$chrootDir/$username
 userHome=$userDir/home/$username
 
 if [ -z "$(cat /etc/ssh/sshd_config | grep "Match Group chrooted")" ]
@@ -40,7 +51,7 @@ if [ -z "$(cat /etc/ssh/sshd_config | grep "Match Group chrooted")" ]
 		# Add users to sshd_config
 		echo -e '\n' | sudo tee -a /etc/ssh/sshd_config > /dev/null
 		echo -e "Match Group chrooted" | sudo tee -a /etc/ssh/sshd_config > /dev/null
-		echo -e "\tChrootDirectory /srv/chroot/%u" | sudo tee -a /etc/ssh/sshd_config > /dev/null
+		echo -e "\tChrootDirectory ${chrootDir}/%u" | sudo tee -a /etc/ssh/sshd_config > /dev/null
 fi
 
 
@@ -56,7 +67,6 @@ umount $userDir/etc/resolv.conf
 umount $userDir/proc
 rm -r $userDir
 
-#### Installer Ubuntu dans le chroot (schroot) ####
 # Configuration de schroot pour l'utilisateur (Dans /etc/schroot/chroot.d/$username.conf)
 echo -e "[${username}]" | tee /etc/schroot/chroot.d/$username.conf > /dev/null
 echo -e "description=Ubuntu Focal for ${username}" | tee -a /etc/schroot/chroot.d/$username.conf > /dev/null
@@ -65,9 +75,16 @@ echo -e "root-users=${username}" | tee -a /etc/schroot/chroot.d/$username.conf >
 echo -e "root-groups=${username}" | tee -a /etc/schroot/chroot.d/$username.conf > /dev/null
 echo -e "type=directory" | tee -a /etc/schroot/chroot.d/$username.conf > /dev/null
 
-# debootstrap --arch=amd64 focal $userDir http://archive.ubuntu.com/ubuntu/
-cp -a /srv/chrootTemplate $userDir
 
+#### Installer Ubuntu dans le chroot (schroot) ####
+# Remove process management from Template (Need to be mounted later, not copied)
+umount $chrootTemplateDir/proc
+
+# Copier le Template en tant que home
+echo -e "Copy ${chrootTemplateDir} in ${userDir} (Can take a while) ..."
+cp -a $chrootTemplateDir $userDir
+
+#### Configuration de Ubuntu dans le chroot ####
 # Add user info in the chroot
 cat /etc/shadow | grep "$username:" >> $userDir/etc/shadow
 cat /etc/passwd | grep "$username:" >> $userDir/etc/passwd
@@ -81,9 +98,7 @@ cp --parents /etc/resolv.conf $userDir
 mkdir $userDir/proc
 mount -o bind /proc $userDir/proc
 
-# Création du home dans le chroot
-mkdir userHome
-
+#### Installation de logiciels dans le chroot ####
 #### Lancer inChroot.bash dans le chroot en root #######################
 cp inChroot.bash $userDir
 chroot $userDir /bin/bash inChroot.bash $username $password $port

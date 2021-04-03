@@ -1,0 +1,45 @@
+
+
+# Exemple de config pour un user (Dans /etc/schroot/chroot.d/user10.conf)
+[user10]
+description=Ubuntu Focal for user10
+directory=/home/user10
+root-users=user10
+root-groups=user10
+type=directory
+users=user10
+groups=user10
+
+
+# Créer le Chroot / Install Ubuntu dans le chroot
+mkdir -p /srv/chroot/user10
+debootstrap --arch=amd64 focal /srv/chroot/user10 http://archive.ubuntu.com/ubuntu/
+
+# Lister les chroot
+schroot -l
+
+# Entrer dans le chroot
+ schroot -c user10 -u root
+ chroot /srv/chroot/user10
+ 
+# Add internet access (Not working?)
+sudo cp --parents /run/systemd/resolve/stub-resolv.conf /srv/chroot/user10
+sudo cp --parents /etc/resolv.conf /srv/chroot/user10
+
+# Add process management
+sudo mkdir /srv/chroot/user10/proc
+sudo mount -o bind /proc /srv/chroot/user10/proc
+
+# Configurer SSH
+# Users info into the chrood
+sudo cp -vf /etc/{passwd,group} $userDir/etc
+
+# INSIDE THE CHROOT as root
+usermod -a -G sudo user10
+
+# Installer steamcmd
+apt-get install software-properties-common
+add-apt-repository multiverse
+dpkg --add-architecture i386
+apt update
+apt install lib32gcc1 steamcmd

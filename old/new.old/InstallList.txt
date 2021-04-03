@@ -1,0 +1,17 @@
+/bin/bash
+/bin/apt-get
+/bin/tar
+/bin/curl
+/bin/gzip
+/usr/bin/env
+/bin/ls
+/bin/mkdir
+/bin/basename
+/bin/uname
+/bin/nano
+/root/Steam/linux32/steamcmd
+/bin/resolvectl
+/bin/systemd-resolve
+/bin/ping
+/bin/ssh
+/bin/openssl

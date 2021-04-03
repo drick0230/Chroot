@@ -1,0 +1,91 @@
+https://www.cyberciti.biz/faq/debian-ubuntu-restricting-ssh-user-session-to-a-directory-chrooted-jail/
+https://www.tecmint.com/restrict-ssh-user-to-directory-using-chrooted-jail/
+https://www.howtogeek.com/441534/how-to-use-the-chroot-command-on-linux/
+
+:: Create chrood jail
+Directory = /Jail
+sudo mkdir Directory
+
+:: Create dev repertory with node
+sudo mkdir $Directory/dev
+sudo mknod -m 666 $Directory/dev/null c 1 3
+sudo mknod -m 666 $Directory/dev/tty c 5 0
+sudo mknod -m 666 $Directory/dev/zero c 1 5
+sudo mknod -m 666 $Directory/dev/random c 1 8
+
+:: Permission for Jail (Root only)
+sudo chown root:root ~/Directory
+sudo chmod 0755 ~/Directory
+
+:: Installing a program in the chrood from the system (Example : Bash)
+:: Create the bin directory in the chrood
+sudo mkdir $Directory/bin
+
+:: Copy the binary version of Bash
+sudo cp -v /bin/bash $Directory/bin
+
+:: Show required dependencies for Bash (Manual)
+ldd /bin/bash 
+:: Copy dependencies into chrood Ex:
+sudo mkdir ~/Directory/lib
+sudo mkdir ~/Directory/lib/x86_64-linux-gnu
+sudo mkdir ~/Directory/lib64
+sudo cp -v /lib/x86_64-linux-gnu/{libtinfo.so.6,libdl.so.2,libc.so.6} ~/Directory/lib
+sudo cp -v /lib64/ld-linux-x86-64.so.2 ~/Directory/lib64
+sudo cp -va /lib/x86_64-linux-gnu/libnss_files* ~/Directory/lib/x86_64-linux-gnu
+
+:: OR Show required dependencies for Bash (Auto)
+list="$(ldd /bin/bash | egrep -o '/lib.*\.[0-9]')"
+echo list
+:: Copy dependencies into chrood Ex:
+for i in $list; do sudo cp -v --parents "$i" "${Directory}"; done
+
+
+
+:: SSH - Create and delete user
+:: Add
+useradd jailClient
+:: Change Password
+passwd jailClient
+:: Update ssh users info in chroot
+mkdir $Directory/etc
+cp -vf /etc/{passwd,group} $Directory/etc
+
+:: SSH - General
+systemctl restart sshd
+sudo /etc/init.d/ssh start
+
+
+:: Other method
+https://help.ubuntu.com/community/BasicChroot
+https://manpages.ubuntu.com/manpages/focal/fr/man5/schroot.conf.5.html
+
+:: Create User
+sudo adduser client
+sudo chown root:root /home/client
+sudo chmod 0755 /home/client
+
+:: schroot.conf
+[focal]
+description=Ubuntu Focal for client
+location=/home/client
+users=client
+groups=sbuild
+root-groups=root
+
+:: Install Focal Fossa (Changer le mirrors (Canadien) pour un mirrors Français)
+sudo debootstrap --variant=buildd --arch amd64 fedora /home/client/ http://mirrors.layeronline.com/ubuntu/ 
+
+:: Add process management
+sudo mount -o bind /proc /home/client/proc
+
+:: Add internet access
+sudo cp /etc/resolv.conf /home/client/etc/resolv.conf
+
+:: SSH
+:: /etc/ssh/sshd_config
+Match User client
+	ChrootDirectory /home/client
+
+:: Restart SSh service (Apply config)
+sudo /etc/init.d/ssh restart

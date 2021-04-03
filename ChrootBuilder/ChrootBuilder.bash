@@ -6,8 +6,11 @@
 #
 # Description : Création et configuration d'un utilisateur avec son home
 #				en tant que Chroot et installation de programmes.
+#				Le chroot est une copie d'un template qui doit être généré
+#				avec TemplateBuilder.sh
+#
 #				-Ajout du groupe chrooted dans sshd_config
-#				-Le home si situe dans /srv/chroot/
+#				-Le home se situe dans /srv/chroot/
 #				-L'utilisateur a accès à sudo dans le chroot
 #				-Steam est installer dans le chroot
 #
@@ -29,7 +32,7 @@ echo -e '\n'
 userDir=/srv/chroot/$username
 userHome=$userDir/home/$username
 
-if [$(cat /etc/ssh/sshd_config | grep "Match Group chrooted") == ""]
+if [ -z "$(cat /etc/ssh/sshd_config | grep "Match Group chrooted")" ]
 	then
 		# Created chrooted group
 		addgroup chrooted

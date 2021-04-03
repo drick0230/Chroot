@@ -14,19 +14,25 @@
 username=$1
 password=$2
 port=$3
+userID=$4
+groupID=$5
 
 userHome=/home/$username
 
-# Donner les droits sudo à l'utilisateur
-usermod -a -G sudo $username
+# Créer l'utilisateur (sudo), son groupe et son home
+useradd -mU -G sudo -s /bin/bash -u $userID $username
 echo -e "${username}  ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/$username > /dev/null
 
-# Créer le home de l'utilisateur
-mkhomedir_helper $userHome
+# Assigner le mot de passe à l'utilisateur
+echo -e $username:$password | chpasswd
+
+# Assigner le bon GID au groupe de l'utilisateur
+oldGroupID=$(id -g $username)
+groupmod -g $groupID $username
+find / -group $oldGroupID -exec chgrp -h $username {} \; # Appliquer à tous les fichiers
 
 # Su en root lors de la connection
-#touch $userHome/.bashrc
-#echo -e "sudo su" >> /etc/bash.bashrc
+echo -e "sudo su" >> $userHome/.bashrc
 
 # Installer Steam
 dpkg --add-architecture i386

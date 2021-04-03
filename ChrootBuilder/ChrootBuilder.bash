@@ -57,7 +57,7 @@ fi
 
 # Create user
 useradd $username
-usermod -a -G chrooted $username
+usermod -a -G chrooted -s /bin/bash $username
 
 # Password
 echo -e $username:$password | chpasswd
@@ -85,11 +85,6 @@ echo -e "Copy ${chrootTemplateDir} in ${userDir} (Can take a while) ..."
 cp -a $chrootTemplateDir $userDir
 
 #### Configuration de Ubuntu dans le chroot ####
-# Add user info in the chroot
-cat /etc/shadow | grep "$username:" >> $userDir/etc/shadow
-cat /etc/passwd | grep "$username:" >> $userDir/etc/passwd
-cat /etc/group | grep "$username:" >> $userDir/etc/group
-
 # Add internet access (Not working?)
 cp --parents /run/systemd/resolve/stub-resolv.conf $userDir
 cp --parents /etc/resolv.conf $userDir
@@ -101,7 +96,7 @@ mount -o bind /proc $userDir/proc
 #### Installation de logiciels dans le chroot ####
 #### Lancer inChroot.bash dans le chroot en root #######################
 cp inChroot.bash $userDir
-chroot $userDir /bin/bash inChroot.bash $username $password $port
+chroot $userDir /bin/bash inChroot.bash $username $password $port $(id -u $username) $(id -g $username)
 
 # Restart SSh service (Apply config)
 /etc/init.d/ssh restart

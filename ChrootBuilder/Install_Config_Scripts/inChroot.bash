@@ -36,16 +36,17 @@ echo -e "sudo su" >> $userHome/.bashrc
 
 # Installer Steam
 dpkg --add-architecture i386
-apt -y update
-apt -y install lib32gcc1 steamcmd
+apt-get -qqy update
+apt-get -qqy install lib32gcc1
+apt-get -qqy install steamcmd
 
 # Installer SDL
-apt -y install libsdl2-2.0-0:i386
+apt-get -qqy install libsdl2-2.0-0:i386
 
 # Installer VNC server
 apt-get update
-apt-get -y install xfce4 xfce4-goodies
-apt-get -y install tightvncserver
+apt-get -qqy install xfce4 xfce4-goodies
+apt-get -qqy install tightvncserver
 echo -e $password | vncserver :$port
 vncserver -kill :$port
 mv /root/.vnc/xstartup /root/.vnc/xstartup.bak

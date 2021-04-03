@@ -4,15 +4,20 @@
 ###########################################################################
 # Script : ChrootSetup.bash
 #
-# Description : Création et configuration d'un utilisateur avec son home
-#				en tant que Chroot et installation de programmes.
-#				Le chroot est une copie d'un template qui doit être généré
-#				avec TemplateBuilder.sh
+# Description : Création et configuration d'un utilisateur sur le système.
+#				Il est assigné à son groupe et au groupe chroot.
+#				Un chroot lui est créer et assigner pour les connexions
+#				ssh.
 #
-#				-Ajout du groupe chrooted dans sshd_config
-#				-Le home se situe dans /srv/chroot/
-#				-L'utilisateur a accès à sudo dans le chroot
-#				-Steam est installer dans le chroot
+#				Le chroot est une copie d'un template qui doit être généré
+#				préalablement avec TemplateBuilder.sh
+#
+#				Tous les fichiers .bash se retrouvant dans le répertoire
+#				./ChrootScripts seront exécuté en tant que root à
+#				l'intérieur du chroot de l'utilisateur.
+#				L'ordre d'écution doit être définit en rajoutant un
+#				numéro - fichier bash.
+#				Ex: 1-userSetup.bash 2-steamInstall.bash 3-vncserverInstall.bash
 #
 #
 # Dépendances : schroot et debootstrap
@@ -21,9 +26,10 @@
 
 #### Constant Variables ####
 chrootTemplateDir="/srv/chrootTemplate"
-chrootDir="/srv/chroot/"
+chrootDir="/srv/chroot"
 chrootGroup=chrooted
 chrootShell=/bin/bash
+chrootScriptsDir=ChrootScripts
 
 
 
@@ -54,7 +60,7 @@ if [ -d $chrootDir ]
 		mkdir $chrootDir
 fi
 
-port=$(expr $(ls $chrootDir | wc -l) + 1) # Identifiant de la chroot
+chrootID=$(expr $(ls $chrootDir | wc -l) + 1) # Identifiant de la chroot
 
 
 
@@ -119,18 +125,26 @@ echo -e "type=directory" | tee -a /etc/schroot/chroot.d/$username.conf > /dev/nu
 
 #### Installer Ubuntu dans le chroot (Copie du Template) ####
 # Remove process management from Template (Need to be mounted later, not copied)
+# Unmount
 if mountpoint -q $chrootTemplateDir/proc
 	then
 		echo "${chrootTemplateDir}/proc mounted. [...]"
 		umount $chrootTemplateDir/proc
+fi
+echo "${chrootTemplateDir}/proc unmounted. [OK]"
+
+# Remove
+if [ -d $chrootTemplateDir/proc ]
+	then
+		echo "${chrootTemplateDir}/proc exist. [...]"
 		rm -r $chrootTemplateDir/proc
 fi
-echo "${chrootTemplateDir}/proc unmounted and removed. [OK]"
+echo "${chrootTemplateDir}/proc removed. [OK]"
 
 # Copier le Template en tant que chroot pour l'utilisateur
 echo -e "Copy ${chrootTemplateDir} in ${userDir} (Will take a while) [...]"
 cp -a $chrootTemplateDir $userDir
-echo -e "${chrootTemplateDir} copiedvi in ${userDir} [OK]"
+echo -e "${chrootTemplateDir} copied in ${userDir} [OK]"
 
 #### Configuration de Ubuntu dans le chroot ####
 # Add internet access
@@ -143,10 +157,13 @@ mount -o bind /proc $userDir/proc
 
 
 
-#### Installation de logiciels dans le chroot ####
-#### Lancer inChroot.bash dans le chroot en root #######################
-cp inChroot.bash $userDir
-chroot $userDir /bin/bash inChroot.bash $username $password $port $(id -u $username) $(id -g $username)
+#### Installation de logiciels dans le chroot (.bash dans $chrootScriptsDir) ####
+for scriptPath in $chrootScriptsDir/*.bash; do
+    [ -f "$scriptPath" ] || break	# Break if the file didnt exist
+	scriptName=${scriptPath#"$chrootScriptsDir/"} # Remove $chrootScriptsDir/ to get the name
+    cp -v $scriptPath $userDir
+	chroot $userDir $chrootShell $scriptName $username $password $(id -u $username) $(id -g $username) $chrootID
+done
 
 
 

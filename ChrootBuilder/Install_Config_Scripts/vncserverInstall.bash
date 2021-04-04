@@ -25,13 +25,14 @@ userHome=/home/$username
 
 # Installer VNC server
 apt-get update
-apt-get -qqy install xfce4 xfce4-goodies
-apt-get -qqy install tightvncserver
-echo vncserver :$chrootID
+apt-get -y install tightvncserver
+vncserver :$chrootID
 vncserver -kill :$chrootID
-mv /root/.vnc/xstartup /root/.vnc/xstartup.bak
 
-# root/.vnc/xstartup !!!Première ligne non fonctionnel!!!
 
-#echo -e "xrdb $HOME/.Xresources" | sudo tee -a /root/.vnc/xstartup > /dev/null
-#echo -e "startxfce4 &" | sudo tee -a /root/.vnc/xstartup > /dev/null
+# Démarrer xfce4 au démmarage de VNC server (Configuration dans /root/.vnc/xstartup)
+mv /root/.vnc/xstartup /root/.vnc/xstartup.bak # /root/.vnc/xstartup par défaut en backup
+echo "#! /bin/bash" > /root/.vnc/xstartup
+echo "xrdb $HOME/.Xresources" >> /root/.vnc/xstartup
+echo "startxfce4 &" >> /root/.vnc/xstartup
+chmod 755 /root/.vnc/xstartup # Give rx right to everyone

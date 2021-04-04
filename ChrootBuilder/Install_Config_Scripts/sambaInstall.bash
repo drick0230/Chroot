@@ -8,13 +8,14 @@
 #
 ###########################################################################
 
+
 # Constant Variables
 sharedFolderName=SharedFolder
 sharedFolderPath=/media/$sharedFolderName
 
 # Install samba
 apt-get update
-apt-get -qy install samba
+apt-get -y install samba
 
 # Create the directory of the Shared Folder
 mkdir $sharedFolderPath

@@ -25,9 +25,9 @@ userHome=/home/$username
 
 # Installer Steam
 dpkg --add-architecture i386
-apt-get -qqy update
-apt-get -qqy install lib32gcc1
-apt-get -qqy install steamcmd
+apt-get -y update
+apt-get -y install lib32gcc1
+apt-get -y install steamcmd
 
 # Installer SDL
 apt-get -qqy install libsdl2-2.0-0:i386

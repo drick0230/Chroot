@@ -95,14 +95,29 @@ if [ -d $userDir ]
 	then
 		echo "${userDir} exist. Remove it (Can take a while) [...]"
 
-		# Remove process management from user chroot
-		if mountpoint -q $userDir/proc
+		# Unmount every mounted directories inside the chroot
+		for mtabContent in $(cat /etc/mtab  | grep $userDir)
+		do
+			mountedDir="$(echo $mtabContent | grep $userDir)"
+			if [ -n "${mountedDir}" ] # File/Directory exist
 			then
-				echo "${userDir}/proc mounted. [...]"
-				umount $userDir/proc
-		fi
-		echo "${userDir}/proc unmounted. [OK]"
-		
+				echo "${mountedDir} mounted. Unmount it. [...]"
+				#fuser -skm $mountedDir # Kill every process using it (also kill this process)
+				umount $mountedDir;
+				
+				if mountpoint -q $mountedDir
+					then
+						echo "Cant unmount ${mountedDir}. [ERROR]"
+						echo "Use <fuser -cuk ${mountedDir}> to kill the process using it."
+						echo "or/and <fuser -skm ${mountedDir}> to kill the process using it."
+						echo "or/and <lsof | grep ${mountedDir}> to list the process and manually kill them"
+						exit 1
+				fi
+				
+				echo "${mountedDir} unmounted. [OK]"
+			fi
+		done
+
 		# Remove user chroot
 		rm -r $userDir
 		
@@ -150,12 +165,14 @@ echo -e "${chrootTemplateDir} copied in ${userDir} [OK]"
 # Add internet access
 cp --parents /run/systemd/resolve/stub-resolv.conf $userDir
 cp --parents /etc/resolv.conf $userDir
+echo -e "$(hostname -I)\t$(hostname)" >> $userDir/etc/hosts # Ajouter le hostname et l'ip attitré dans le chroot
 
 # Add process management
 mkdir $userDir/proc
 mount -o bind /proc $userDir/proc
 
-
+# Add terminal info
+mount -o bind /dev/pts $userDir/dev/pts
 
 #### Installation de logiciels dans le chroot (.bash dans $chrootScriptsDir) ####
 for scriptPath in $chrootScriptsDir/*.bash; do
@@ -169,3 +186,5 @@ done
 
 # Restart SSh service (Apply config)
 /etc/init.d/ssh restart
+
+echo "Chroot ${userDir} of ${username} [completed]"

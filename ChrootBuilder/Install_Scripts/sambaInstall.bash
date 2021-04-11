@@ -35,3 +35,6 @@ ufw allow samba
 # Add samba user (Need to be a real system user)
 read -p "Nom d'utilisateur:" username
 smbpasswd -a $username
+
+# Give right to the samba user
+chown $username:$username $sharedFolderPath

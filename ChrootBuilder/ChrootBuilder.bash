@@ -69,6 +69,7 @@ read -s -p "Mot de passe:" password		# Mot de passe de l'utilisateur
 echo -e '\n'
 
 userDir=$chrootDir/$username 			# Répertoire du chroot de l'utilisateur
+userHome=$userDir/home/$username 		# Répertoire du home dans le chroot de l'utilisateur
 
 # Création de l'utilisateur, ajout dans le goupe chroot et changement de son shell pour Bash
 if [ -n "$(cat /etc/passwd | grep "${username}:")" ]; then
@@ -176,22 +177,22 @@ for scriptPath in $chrootScriptsDir/*.bash; do
 	scriptName=${scriptPath#"$chrootScriptsDir/"} # Remove $chrootScriptsDir/ to get the name
 	answer=0
 	
-	while [ $answer != "Y" ] && [ $answer != "N" ]; do
-		read -p "Exécuter ${scriptName} [Y]es/[N]o : " answer # Exécution du script?
+	while [ $answer != "y" ] && [ $answer != "n" ]; do
+		read -p "Exécuter ${scriptName} [y]es/[n]o : " answer # Exécution du script?
 	done
 	
-	if [ $answer == "Y" ]; then
+	if [ $answer == "y" ]; then
 		answer=0
-		while [ $answer != "Y" ] && [ $answer != "N" ]; do
-			read -p "Exécuter ${scriptName} en Root [Y]es/[N]o : " answer # Exécution du script en Root?
+		while [ $answer != "y" ] && [ $answer != "n" ]; do
+			read -p "Exécuter ${scriptName} en Root [y]es/[n]o : " answer # Exécution du script en Root?
 		done
 		
-		if [ $answer == "Y" ]; then
+		if [ $answer == "y" ]; then
 			cp -v $scriptPath $userDir
 			chroot --userspec=root:root $userDir $chrootShell $scriptName $username $password $(id -u $username) $(id -g $username) $chrootID
 		else
-			cp -v $scriptPath $userDir
-			chroot --userspec=$username:$username $userDir $chrootShell $scriptName $username $password $(id -u $username) $(id -g $username) $chrootID
+			cp -v $scriptPath $userHome
+			chroot --userspec=$username:$username $userHome $chrootShell $scriptName $username $password $(id -u $username) $(id -g $username) $chrootID
 		fi
 	fi
 done

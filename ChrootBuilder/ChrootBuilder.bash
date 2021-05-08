@@ -13,10 +13,10 @@
 #				préalablement avec TemplateBuilder.sh
 #
 #				Tous les fichiers .bash se retrouvant dans le répertoire
-#				./ChrootScripts seront exécuté en tant que root à
-#				l'intérieur du chroot de l'utilisateur.
-#				L'ordre d'écution doit être définit en rajoutant un
-#				numéro - fichier bash.
+#				./ChrootScripts seront exécuté en tant que root ou utilisateur
+#				à l'intérieur du chroot de de ce dernier.
+#				L'ordre d'éxécution doit être définit en rajoutant un
+#				numéro devant les fichiers Bash du répertoire.
 #				Ex: 1-userSetup.bash 2-steamInstall.bash 3-vncserverInstall.bash
 #
 #
